@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a3d6b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="مجمعات مائية">
+    <title>استمارة بيانات المجمعات المائية</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+        :root{
+            --primary:#0a3d6b;--primary-lt:#1a5fa0;--primary-bg:#e8f1fb;
+            --accent:#00b4d8;--success:#1b9b5e;--success-bg:#e6f7f0;
+            --danger:#c0392b;--danger-bg:#fdf0ef;--warn:#d68910;--warn-bg:#fef9ec;
+            --surface:#ffffff;--bg:#f0f4f8;--border:#dde3eb;
+            --text:#1a2332;--text-muted:#5a6a7e;
+            --radius-sm:8px;--radius-md:12px;--radius-lg:18px;
+            --shadow-sm:0 2px 8px rgba(10,61,107,.07);--shadow-md:0 4px 20px rgba(10,61,107,.12);
+            --transition:0.22s cubic-bezier(.4,0,.2,1)
+        }
+        html{font-size:16px;scroll-behavior:smooth}
+        body{font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0;overflow-x:hidden}
+        .app-header{background:linear-gradient(135deg,var(--primary) 0%,#0d5298 100%);color:#fff;padding:18px 20px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(10,61,107,.3)}
+        .app-header h1{font-size:clamp(16px,4vw,22px);font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+        .app-header p{font-size:12px;opacity:.8;margin-top:4px}
+        .header-icon{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+        .main{max-width:900px;margin:0 auto;padding:16px 12px 100px}
+        .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+        .stat-card{background:var(--surface);border-radius:var(--radius-md);padding:14px 12px;text-align:center;box-shadow:var(--shadow-sm);border:1px solid var(--border);transition:var(--transition)}
+        .stat-card:active{transform:scale(.97)}
+        .stat-card .label{font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px;line-height:1.3}
+        .stat-card .value{font-size:clamp(20px,5vw,28px);font-weight:800;color:var(--primary);line-height:1}
+        .stat-card .value.small{font-size:clamp(11px,2.5vw,13px);color:var(--text-muted);font-weight:600}
+        .progress-bar-wrap{background:var(--surface);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow-sm);border:1px solid var(--border)}
+        .progress-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:8px}
+        .progress-track{height:6px;background:var(--border);border-radius:99px;overflow:hidden}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary-lt));border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%}
+        .tabs-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:0}
+        .tabs-scroll::-webkit-scrollbar{display:none}
+        .tabs-bar{display:flex;gap:6px;border-bottom:2px solid var(--border);padding-bottom:0;min-width:max-content;width:100%}
+        .tab-btn{padding:11px 16px;border:none;background:transparent;cursor:pointer;border-radius:var(--radius-sm) var(--radius-sm) 0 0;font-weight:700;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text-muted);transition:var(--transition);white-space:nowrap;position:relative;bottom:-2px;border-bottom:3px solid transparent;-webkit-user-select:none;user-select:none}
+        .tab-btn:hover{color:var(--primary);background:var(--primary-bg)}
+        .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--primary-bg)}
+        .tab-btn.has-error{color:var(--danger);border-bottom-color:var(--danger)}
+        .tab-btn .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:var(--border);vertical-align:middle;transition:var(--transition)}
+        .tab-btn.done .dot{background:var(--success)}
+        .tab-btn.has-error .dot{background:var(--danger)}
+        .tab-btn.active .dot{background:var(--primary)}
+        .form-card{background:var(--surface);border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:var(--shadow-md);border:1px solid var(--border);border-top:none;overflow:hidden}
+        .tab-content{display:none;padding:20px 16px 16px}
+        .tab-content.active{display:block;animation:fadeSlide .25s ease-out}
+        @keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:13px;font-weight:700;color:var(--text)}
+        .form-group input,.form-group select,.form-group textarea{padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);background:#fff;transition:var(--transition);outline:none;width:100%}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary-lt);box-shadow:0 0 0 3px rgba(26,95,160,.12)}
+        .form-group input.invalid,.form-group select.invalid{border-color:var(--danger);background:var(--danger-bg)}
+        .form-group input.valid,.form-group select.valid{border-color:var(--success)}
+        .form-group textarea{resize:vertical;min-height:80px}
+        .field-hint{font-size:11px;min-height:16px;line-height:1.4}
+        .field-hint.error{color:var(--danger)}
+        .req{color:var(--danger);font-size:14px}
+        .full-width{grid-column:1/-1}
+        .section-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;padding-bottom:14px;border-bottom:1.5px solid var(--border)}
+        .section-icon{width:36px;height:36px;background:var(--primary-bg);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+        .section-heading h2{font-size:16px;font-weight:800;color:var(--primary)}
+        .section-heading p{font-size:12px;color:var(--text-muted);margin-top:2px}
+        .nav-row{display:flex;justify-content:space-between;padding:16px 16px 8px;gap:10px}
+        .btn-nav{padding:11px 22px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;color:var(--text-muted);cursor:pointer;transition:var(--transition)}
+        .btn-nav:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+        .btn-nav:disabled{opacity:.35;cursor:not-allowed}
+        .footer-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 20px}
+        .btn{padding:14px;border:none;border-radius:var(--radius-md);font-family:'Cairo',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px}
+        .btn-save{background:linear-gradient(135deg,var(--success),#22c77a);color:#fff;box-shadow:0 4px 14px rgba(27,155,94,.3)}
+        .btn-export{background:linear-gradient(135deg,var(--primary),var(--primary-lt));color:#fff;box-shadow:0 4px 14px rgba(10,61,107,.25)}
+        .btn:active{transform:scale(.97)}
+        .records-section{margin-top:24px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);border:1px solid var(--border);overflow:hidden}
+        .records-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+        .records-header h3{font-size:15px;font-weight:800;color:var(--primary)}
+        .badge{background:var(--primary);color:#fff;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700}
+        .records-list{padding:12px}
+        .record-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:8px;background:var(--bg);transition:var(--transition)}
+        .record-item:last-child{margin-bottom:0}
+        .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--border)}
+        .status-dot.تعمل{background:var(--success)}
+        .status-dot.متوقفة{background:var(--danger)}
+        .status-dot.مراشنة{background:var(--warn)}
+        .record-name{font-size:14px;font-weight:700;color:var(--text)}
+        .record-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+        .record-delete{padding:6px 14px;border:1.5px solid var(--danger);border-radius:var(--radius-sm);background:transparent;color:var(--danger);font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:var(--transition);flex-shrink:0}
+        .record-delete:hover{background:var(--danger);color:#fff}
+        .empty-state{text-align:center;padding:32px 16px;color:var(--text-muted)}
+        .empty-state .icon{font-size:36px;margin-bottom:10px}
+        .empty-state p{font-size:14px}
+        #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a2332;color:#fff;padding:12px 22px;border-radius:99px;font-size:14px;font-weight:700;font-family:'Cairo',sans-serif;z-index:9999;opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;max-width:90vw}
+        #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        #toast.success{background:var(--success)}
+        #toast.error{background:var(--danger)}
+        #toast.warn{background:var(--warn)}
+        .modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:var(--transition)}
+        .modal-overlay.open{opacity:1;pointer-events:all}
+        .modal-box{background:#fff;border-radius:var(--radius-lg);padding:24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+        .modal-box h3{font-size:17px;font-weight:800;margin-bottom:10px}
+        .modal-box p{font-size:14px;color:var(--text-muted);margin-bottom:18px;line-height:1.6}
+        .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .modal-btn{padding:12px;border:none;border-radius:var(--radius-sm);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+        .modal-btn.cancel{background:var(--bg);color:var(--text-muted);border:1px solid var(--border)}
+        .modal-btn.confirm-del{background:var(--danger);color:#fff}
+        .modal-btn.confirm-export{background:var(--success);color:#fff}
+        .pump-block{background:var(--primary-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:20px}
+        .pump-block-title{font-size:15px;font-weight:800;color:var(--primary);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(10,61,107,.15);display:flex;align-items:center;gap:8px}
+        .optional-section{border:1.5px dashed var(--border);border-radius:var(--radius-md);margin-bottom:16px;overflow:hidden;background:var(--surface)}
+        .optional-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;-webkit-user-select:none;user-select:none;transition:background var(--transition)}
+        .optional-header:hover{background:var(--primary-bg)}
+        .optional-header .opt-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+        .optional-body{padding:16px;background:var(--bg);border-top:1px solid var(--border);display:none}
+        .switch{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
+        .switch input{opacity:0;width:0;height:0;position:absolute}
+        .slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:26px;transition:var(--transition)}
+        .slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:var(--transition);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+        .switch input:checked+.slider{background:var(--success)}
+        .switch input:checked+.slider:before{transform:translateX(20px)}
+        .gps-row{display:flex;gap:10px;align-items:flex-start}
+        .gps-row .form-group{flex:1}
+        .btn-gps{margin-top:22px;padding:12px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:var(--transition);display:flex;align-items:center;gap:6px}
+        .btn-gps:active{transform:scale(.96);filter:brightness(.9)}
+        .btn-gps:disabled{opacity:.5;cursor:not-allowed}
+        input[readonly]{background:var(--primary-bg);color:var(--text-muted);cursor:default}
+        .pipe-entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:12px;overflow:hidden;animation:fadeSlide .2s ease-out}
+        .pipe-entry-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--primary-bg);border-bottom:1px solid var(--border)}
+        .pipe-entry-title{font-size:14px;font-weight:700;color:var(--primary)}
+        .btn-remove-pipe{padding:5px 12px;border:1.5px solid var(--danger);border-radius:var(--radius-sm);background:transparent;color:var(--danger);font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:var(--transition)}
+        .btn-remove-pipe:hover{background:var(--danger);color:#fff}
+        .pipe-entry-body{padding:14px}
+        .btn-add-pipe{width:100%;padding:13px;border:2px dashed var(--primary-lt);border-radius:var(--radius-md);background:var(--primary-bg);color:var(--primary);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+        .btn-add-pipe:hover{background:var(--primary);color:#fff;border-style:solid}
+        /* Village entries with percentage */
+        .village-entry{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:8px;animation:fadeSlide .2s ease-out}
+        .village-entry input{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Cairo',sans-serif;font-size:13px}
+        .village-entry .pct-input{width:80px}
+        .village-entry .pct-label{font-size:12px;color:var(--text-muted);white-space:nowrap;font-weight:600}
+        /* Month grid for operating hours */
+        .month-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+        .month-cell{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;display:flex;flex-direction:column;gap:6px}
+        .month-cell .month-name{font-size:12px;font-weight:700;color:var(--primary)}
+        .month-cell .season-badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:700;width:fit-content}
+        .season-badge.summer{background:#fff3cd;color:#856404}
+        .season-badge.winter{background:#cfe2ff;color:#084298}
+        .month-cell input{padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;text-align:center}
+        .hours-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+        .hours-summary-card{background:var(--surface);border-radius:var(--radius-md);padding:14px;text-align:center;border:1px solid var(--border)}
+        .hours-summary-card .hs-label{font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px}
+        .hours-summary-card .hs-value{font-size:22px;font-weight:800;color:var(--primary)}
+        .hours-summary-card.summer-card{border-color:#ffc107;background:#fff8e1}
+        .hours-summary-card.summer-card .hs-value{color:#856404}
+        .hours-summary-card.winter-card{border-color:#90caf9;background:#e3f2fd}
+        .hours-summary-card.winter-card .hs-value{color:#084298}
+        @media(max-width:480px){
+            .stats-row{grid-template-columns:1fr 1fr}
+            .stats-row .stat-card:last-child{grid-column:1/-1}
+            .form-grid{grid-template-columns:1fr}
+            .footer-btns{grid-template-columns:1fr}
+            .month-grid{grid-template-columns:repeat(2,1fr)}
+            .hours-summary{grid-template-columns:1fr}
+        }
+        @media(min-width:768px){
+            body{padding:20px}
+            .main{padding:20px 0 40px}
+            .app-header{border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <div class="header-icon">🌊</div>
+        <div>
+            <h1>مديرية ماء بابل</h1>
+            <p>استمارة ادخال بيانات المجمعات المائية</p>
+        </div>
+    </div>
+</div>
+
+<div class="main">
+
+    <div class="stats-row">
+        <div class="stat-card"><div class="label">المشاريع المحفوظة</div><div class="value" id="statCount">0</div></div>
+        <div class="stat-card"><div class="label">عاملة / متوقفة</div><div class="value" id="statActive" style="font-size:clamp(16px,4vw,22px)">0 / 0</div></div>
+        <div class="stat-card"><div class="label">آخر حفظ</div><div class="value small" id="statTime">—</div></div>
+    </div>
+
+    <div class="progress-bar-wrap">
+        <div class="progress-bar-label"><span>اكتمال النموذج</span><span id="progressPct">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="tabs-scroll">
+        <div class="tabs-bar" id="tabsBar">
+            <button class="tab-btn active" data-target="basic" data-idx="0"><span class="dot"></span>الأساسية</button>
+            <button class="tab-btn" data-target="pumps" data-idx="1"><span class="dot"></span>المضخات</button>
+            <button class="tab-btn" data-target="chem" data-idx="2"><span class="dot"></span>كلور / شب</button>
+            <button class="tab-btn" data-target="elec" data-idx="3"><span class="dot"></span>الكهرباء</button>
+            <button class="tab-btn" data-target="unit" data-idx="4"><span class="dot"></span>الوحدة المجمعة</button>
+            <button class="tab-btn" data-target="net" data-idx="5"><span class="dot"></span>الشبكات</button>
+            <button class="tab-btn" data-target="staff" data-idx="6"><span class="dot"></span>الكوادر</button>
+            <button class="tab-btn" data-target="hours" data-idx="7"><span class="dot"></span>ساعات التشغيل</button>
+            <button class="tab-btn" data-target="sdata" data-idx="8"><span class="dot"></span>البيانات</button>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <form id="mainForm" novalidate autocomplete="off">
+
+            <!-- ══════════════ TAB 1: BASIC ══════════════ -->
+            <div id="basic" class="tab-content active" data-tab-idx="0">
+                <div class="section-heading">
+                    <div class="section-icon">📋</div>
+                    <div><h2>البيانات الأساسية</h2><p>معلومات التعريف الأساسية للمجمع المائي</p></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اسم القضاء <span class="req">*</span></label>
+                        <select id="b_district" required onchange="cascadeCenter()">
+                            <option value="">— اختر القضاء —</option>
+                            <option value="المسيب">المسيب</option>
+                            <option value="المحاويل">المحاويل</option>
+                            <option value="الحلة">الحلة</option>
+                            <option value="الكفل">الكفل</option>
+                            <option value="كوثى">كوثى</option>
+                            <option value="القاسم">القاسم</option>
+                            <option value="الهاشمية">الهاشمية</option>
+                        </select>
+                        <div class="field-hint" id="hint_b_district"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم المركز <span class="req">*</span></label>
+                        <select id="b_center" required>
+                            <option value="">— اختر القضاء أولاً —</option>
+                        </select>
+                        <div class="field-hint" id="hint_b_center"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم المجمع <span class="req">*</span></label>
+                        <input type="text" id="b_name" required placeholder="أدخل اسم المجمع المائي" maxlength="120" autocomplete="off">
+                        <div class="field-hint" id="hint_b_name"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>الطاقة التصميمية (م³/ساعة)</label>
+                        <input type="number" id="b_capacity" min="0" max="9999999" placeholder="0" step="0.1">
+                        <div class="field-hint" id="hint_b_capacity"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>سنة الاشغال</label>
+                        <input type="number" id="b_year" min="1950" max="2030" placeholder="مثال: 2010" step="1">
+                        <div class="field-hint" id="hint_b_year"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>حالة الوحدة المجمعة <span class="req">*</span></label>
+                        <select id="b_work_status" required>
+                            <option value="تعمل">تعمل ✅</option>
+                            <option value="متوقفة">متوقفة ❌</option>
+                            <option value="مراشنة">مراشنة 🔧</option>
+                        </select>
+                        <div class="field-hint" id="hint_b_work_status"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم النهر المغذي</label>
+                        <input type="text" id="b_river" placeholder="مثال: نهر الفرات" maxlength="80">
+                    </div>
+                    <div class="form-group">
+                        <label>حالة النهر</label>
+                        <select id="b_river_status">
+                            <option value="مستمر">مستمر ✅</option>
+                            <option value="متوقف">متوقف ❌</option>
+                            <option value="مراشنة">مراشنة 🔧</option>
+                        </select>
+                    </div>
+                    <div class="full-width">
+                        <div class="section-heading" style="margin-top:8px;">
+                            <div class="section-icon">📍</div>
+                            <div><h2>موقع المشروع</h2><p>إحداثيات الموقع الجغرافي</p></div>
+                        </div>
+                        <div class="gps-row">
+                            <div class="form-group">
+                                <label>خط الطول (Longitude)</label>
+                                <input type="number" id="b_lng" step="0.000001" min="-180" max="180" placeholder="مثال: 44.3456">
+                                <div class="field-hint" id="hint_b_lng"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>خط العرض (Latitude)</label>
+                                <input type="number" id="b_lat" step="0.000001" min="-90" max="90" placeholder="مثال: 32.6789">
+                                <div class="field-hint" id="hint_b_lat"></div>
+                            </div>
+                            <button type="button" class="btn-gps" id="btnGps" onclick="getGPS()">📡 GPS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ TAB 2: PUMPS ══════════════ -->
+            <div id="pumps" class="tab-content" data-tab-idx="1">
+                <div class="section-heading">
+                    <div class="section-icon">⚙️</div>
+                    <div><h2>بيانات المضخات</h2><p>أضف كل مضخة بوظيفتها وتفاصيلها</p></div>
+                </div>
+                <div id="pumpRowsContainer"></div>
+                <button type="button" class="btn-add-pipe" onclick="addPumpRow()">➕ إضافة مضخة</button>
+                <textarea id="n_pumps_data" style="display:none;"></textarea>
+            </div>
+
+            <!-- ══════════════ TAB 3: CHEM ══════════════ -->
+            <div id="chem" class="tab-content" data-tab-idx="2">
+                <div class="section-heading">
+                    <div class="section-icon">🧪</div>
+                    <div><h2>كلور / شب</h2><p>أجهزة التصفية والتعقيم — أضف كل جهاز بتفاصيله</p></div>
+                </div>
+                <div id="chemRowsContainer"></div>
+                <button type="button" class="btn-add-pipe" onclick="addChemRow()">➕ إضافة جهاز</button>
+                <textarea id="n_chem_data" style="display:none;"></textarea>
+            </div>
+
+            <!-- ══════════════ TAB 4: ELECTRICITY ══════════════ -->
+            <div id="elec" class="tab-content" data-tab-idx="3">
+                <div class="section-heading">
+                    <div class="section-icon">⚡</div>
+                    <div><h2>المنظومة الكهربائية</h2><p>مصادر التغذية والمولدات والطاقة البديلة</p></div>
+                </div>
+                <div class="pump-block">
+                    <div class="pump-block-title">⚡ التغذية الكهربائية</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>مصدر التغذية</label>
+                            <select id="e_source">
+                                <option value="وطني">وطني</option>
+                                <option value="طوارئ">طوارئ</option>
+                                <option value="مولدة فقط">مولدة فقط</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>القدرة الكلية للمحطة (kW)</label>
+                            <input type="number" id="e_total_power" min="0" step="0.1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>سعة محولة الكهرباء (KVA)</label>
+                            <input type="number" id="e_trans" min="0" max="99999" placeholder="0" step="1">
+                            <div class="field-hint" id="hint_e_trans"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Dynamic Generators -->
+                <div class="pump-block">
+                    <div class="pump-block-title">🔋 المولدات</div>
+                    <div id="genRowsContainer"></div>
+                    <button type="button" class="btn-add-pipe" onclick="addGenRow()" style="margin-bottom:0;">➕ إضافة مولدة</button>
+                </div>
+                <textarea id="n_gens_data" style="display:none;"></textarea>
+                <!-- Solar (optional) -->
+                <div class="optional-section">
+                    <div class="optional-header" onclick="toggleOptional('alt_power')">
+                        <span class="opt-title">☀️ الكهرباء البديلة</span>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="has_alt_power" onchange="toggleOptional('alt_power',this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="optional-body" id="alt_power_section">
+                        <div class="form-grid">
+                            <div class="form-group"><label>النوع</label><input type="text" id="e_alt_type" value="طاقة شمسية" readonly></div>
+                            <div class="form-group"><label>القدرة الكلية (kW)</label><input type="number" id="e_alt_power" min="0" step="0.1" placeholder="0"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ TAB 5: UNIT ══════════════ -->
+            <div id="unit" class="tab-content" data-tab-idx="4">
+                <div class="section-heading">
+                    <div class="section-icon">🏗️</div>
+                    <div><h2>الوحدة المجمعة</h2><p>حالة المنشآت والمكونات الإنشائية</p></div>
+                </div>
+                <div class="pump-block">
+                    <div class="pump-block-title">📋 الحالة العامة</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>حالة الوحدة المجمعة</label>
+                            <select id="u_condition">
+                                <option value="جيدة">جيدة ✅</option>
+                                <option value="متوسطة">متوسطة 🟡</option>
+                                <option value="تحتاج صيانة">تحتاج صيانة 🔧</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>السياج</label>
+                            <select id="u_fence">
+                                <option value="متوفر">متوفر ✅</option>
+                                <option value="غير متوفر">غير متوفر ❌</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>هيكل السحب</label>
+                            <select id="u_intake">
+                                <option value="موجود">موجود ✅</option>
+                                <option value="غير موجود">غير موجود ❌</option>
+                                <option value="يحتاج صيانة">يحتاج صيانة 🔧</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>ملاحظات</label>
+                            <textarea id="u_notes" rows="3" placeholder="أي ملاحظات تخص الوحدة المجمعة..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="optional-section">
+                    <div class="optional-header" onclick="toggleOptional('building')">
+                        <span class="opt-title">🏢 بناية الخدمات</span>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="has_building" onchange="toggleOptional('building',this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="optional-body" id="building_section">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>حالة البناية</label>
+                                <select id="u_building_status">
+                                    <option value="جيدة">جيدة ✅</option>
+                                    <option value="تحتاج صيانة">تحتاج صيانة 🔧</option>
+                                    <option value="غير متوفرة">غير متوفرة ❌</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ TAB 6: NETWORK ══════════════ -->
+            <div id="net" class="tab-content" data-tab-idx="5">
+                <div class="section-heading">
+                    <div class="section-icon">🔧</div>
+                    <div><h2>شبكة التوزيع</h2><p>أقطار الأنابيب وبيانات كل خط</p></div>
+                </div>
+                <div id="pipeRowsContainer"></div>
+                <button type="button" class="btn-add-pipe" onclick="addPipeRow()">➕ إضافة قطر أنبوب</button>
+                <textarea id="n_pipes_data" style="display:none;"></textarea>
+                <div class="pump-block" style="margin-top:4px;">
+                    <div class="pump-block-title">📝 ملاحظات الشبكة</div>
+                    <div class="form-group">
+                        <textarea id="n_notes" rows="3" placeholder="أي ملاحظات إضافية أو مشاكل في الشبكة..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ TAB 7: STAFF ══════════════ -->
+            <div id="staff" class="tab-content" data-tab-idx="6">
+                <div class="section-heading">
+                    <div class="section-icon">👤</div>
+                    <div><h2>الكوادر</h2><p>بيانات الكوادر الوظيفية للمحطة</p></div>
+                </div>
+                <div id="staffRowsContainer"></div>
+                <button type="button" class="btn-add-pipe" onclick="addStaffRow()">➕ إضافة كادر</button>
+                <textarea id="n_staff_data" style="display:none;"></textarea>
+            </div>
+
+            <!-- ══════════════ TAB 8: HOURS ══════════════ -->
+            <div id="hours" class="tab-content" data-tab-idx="7">
+                <div class="section-heading">
+                    <div class="section-icon">🕐</div>
+                    <div><h2>ساعات التشغيل</h2><p>أضف الأشهر التي لديك بيانات عنها فقط</p></div>
+                </div>
+                <!-- Summary cards -->
+                <div class="hours-summary">
+                    <div class="hours-summary-card summer-card">
+                        <div class="hs-label">☀️ معدل الصيف</div>
+                        <div class="hs-value" id="avg_summer">—</div>
+                        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">أيار — تشرين الأول</div>
+                    </div>
+                    <div class="hours-summary-card winter-card">
+                        <div class="hs-label">❄️ معدل الشتاء</div>
+                        <div class="hs-value" id="avg_winter">—</div>
+                        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">تشرين الثاني — نيسان</div>
+                    </div>
+                    <div class="hours-summary-card">
+                        <div class="hs-label">📅 المعدل السنوي</div>
+                        <div class="hs-value" id="avg_annual">—</div>
+                        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">متوسط الأشهر المدخلة</div>
+                    </div>
+                </div>
+                <!-- Dynamic hours rows -->
+                <div id="hoursRowsContainer"></div>
+                <button type="button" class="btn-add-pipe" onclick="addHoursRow()">➕ إضافة شهر</button>
+                <textarea id="n_hours_data" style="display:none;"></textarea>
+            </div>
+
+            <!-- ══════════════ TAB 9: DATA ══════════════ -->
+            <div id="sdata" class="tab-content" data-tab-idx="8">
+                <div class="section-heading">
+                    <div class="section-icon">📊</div>
+                    <div><h2>البيانات</h2><p>إحصائيات الخدمة والمشتركين</p></div>
+                </div>
+                <div class="pump-block">
+                    <div class="pump-block-title">📊 إحصائيات الخدمة</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>عدد المخدومين</label><input type="number" id="sd_served" min="0" step="1" placeholder="0"></div>
+                        <div class="form-group"><label>عدد المحرومين</label><input type="number" id="sd_deprived" min="0" step="1" placeholder="0"></div>
+                        <div class="form-group"><label>نسبة الشحة المائية (%)</label><input type="number" id="sd_scarcity" min="0" max="100" step="1" placeholder="0"></div>
+                        <div class="form-group"><label>عدد الاشتراكات</label><input type="number" id="sd_subscriptions" min="0" step="1" placeholder="0"></div>
+                    </div>
+                </div>
+                <!-- Villages with service % -->
+                <div class="pump-block">
+                    <div class="pump-block-title">🏘️ القرى والمناطق المخدومة</div>
+                    <div id="villagesContainer"></div>
+                    <button type="button" class="btn-add-pipe" onclick="addVillage()" style="margin-top:8px;">➕ إضافة قرية / منطقة</button>
+                    <textarea id="sd_villages_data" style="display:none;"></textarea>
+                </div>
+            </div>
+
+            <!-- NAV BUTTONS -->
+            <div class="nav-row">
+                <button type="button" class="btn-nav" id="btnPrev" disabled onclick="navigateTab(-1)">◀ السابق</button>
+                <button type="button" class="btn-nav" id="btnNext" onclick="navigateTab(1)">التالي ▶</button>
+            </div>
+            <div class="footer-btns">
+                <button type="submit" class="btn btn-save">💾 حفظ المشروع</button>
+                <button type="button" class="btn btn-export" onclick="openExportModal()">📥 تصدير CSV</button>
+            </div>
+
+        </form>
+    </div><!-- end form-card -->
+
+    <!-- RECORDS LIST -->
+    <div class="records-section" id="recordsSection">
+        <div class="records-header">
+            <h3>المشاريع المسجّلة</h3>
+            <span class="badge" id="recordsBadge">0</span>
+        </div>
+        <div class="records-list" id="recordsList">
+            <div class="empty-state"><div class="icon">📭</div><p>لا توجد مشاريع مسجلة بعد</p></div>
+        </div>
+    </div>
+
+</div><!-- end .main -->
+
+<div id="toast"></div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="exportModal">
+    <div class="modal-box">
+        <h3>📥 تصدير قاعدة البيانات</h3>
+        <p>تصدير <strong id="exportCount">0</strong> مشروع — الملف المضغوط يحتوي على:</p>
+        <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.9;">
+            📁 <strong>csv/</strong> — جدول CSV لكل جدول (Python &amp; PostgreSQL)<br>
+            🐍 <strong>json/database.json</strong> — هيكل علائقي كامل<br>
+            🐘 <strong>sql/database.sql</strong> — ملف PostgreSQL جاهز<br>
+            📄 <strong>README.txt</strong> — تعليمات الاستخدام
+        </div>
+        <div style="display:grid;gap:8px;margin-bottom:0;">
+            <button class="modal-btn confirm-export" onclick="doExport(false)" style="padding:14px;font-size:15px;">
+                📦 تصدير ZIP الكامل
+            </button>
+            <button class="modal-btn" style="background:var(--warn);color:#fff;padding:14px;font-size:15px;" onclick="doExport(true)">
+                📦 تصدير ZIP + مسح البيانات
+            </button>
+            <button class="modal-btn cancel" onclick="closeModal('exportModal')">إلغاء</button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <h3>🗑️ حذف المشروع</h3>
+        <p>هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع.</p>
+        <div class="modal-btns">
+            <button class="modal-btn cancel" onclick="closeModal('deleteModal')">إلغاء</button>
+            <button class="modal-btn confirm-del" onclick="confirmDelete()">حذف</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   WCU v4 — Relational Database Architecture
+   Tables: projects | pumps | chem | generators
+           pipes | staff | hours | villages
+   Export: ZIP/CSV · JSON · PostgreSQL SQL
+   ══════════════════════════════════════════════ */
+
+const DB_KEY    = 'wcu_db_v4';
+const DRAFT_KEY = 'wcu_draft_v4';
+const TABS      = ['basic','pumps','chem','elec','unit','net','staff','hours','sdata'];
+let currentTab  = 0;
+let deleteIndex = -1;
+
+/* ─── Relational DB (8 tables) ─── */
+const EMPTY_DB = () => ({
+    projects:   [],   /* core project fields */
+    pumps:      [],   /* project_id + pump details */
+    chem:       [],   /* project_id + device details */
+    generators: [],   /* project_id + generator details */
+    pipes:      [],   /* project_id + pipe details */
+    staff:      [],   /* project_id + staff details */
+    hours:      [],   /* project_id + 12 months + averages */
+    villages:   [],   /* project_id + name + service_pct */
+});
+let db = EMPTY_DB();
+
+/* ─── Districts / Centers ─── */
+const DISTRICTS = {
+    'المسيب':    ['مركز ماء سدة الهندية','مركز ماء سوراء','مركز ماء المسيب','مركز ماء الاسكندرية','مركز ماء جرف النصر'],
+    'المحاويل':  ['مركز ماء المحاويل','مركز ماء الامام','مركز ماء النيل'],
+    'الحلة':     ['مركز ماء عنانة وبرنون','مركز ماء المعيميرة','مركز المدينة','مركز ماء ابي غرق'],
+    'الكفل':     ['مركز ماء الكفل'],
+    'كوثى':      ['مركز ماء كوثى'],
+    'القاسم':    ['مركز ماء الابراهيمية','مركز ماء القاسم','مركز ماء الطليعة'],
+    'الهاشمية':  ['مركز ماء الهاشمية','مركز ماء الحمزة الغربي','مركز ماء الشوملي'],
+};
+
+/* ─── ID Generation: DISTRICT-CENTER-NNN ─── */
+const DISTRICT_CODES = {
+    'المسيب':'MSB','المحاويل':'MHW','الحلة':'HLA',
+    'الكفل':'KFL','كوثى':'KTH','القاسم':'QSM','الهاشمية':'HSH',
+};
+const CENTER_CODES = {
+    'مركز ماء سدة الهندية':'SHN','مركز ماء سوراء':'SWR','مركز ماء المسيب':'MSB',
+    'مركز ماء الاسكندرية':'ISK','مركز ماء جرف النصر':'JRF',
+    'مركز ماء المحاويل':'MHW','مركز ماء الامام':'IMM','مركز ماء النيل':'NIL',
+    'مركز ماء عنانة وبرنون':'ANB','مركز ماء المعيميرة':'MAM',
+    'مركز المدينة':'MDN','مركز ماء ابي غرق':'AGH',
+    'مركز ماء الكفل':'KFL','مركز ماء كوثى':'KTH',
+    'مركز ماء الابراهيمية':'IBR','مركز ماء القاسم':'QSM','مركز ماء الطليعة':'TLA',
+    'مركز ماء الهاشمية':'HSH','مركز ماء الحمزة الغربي':'HMZ','مركز ماء الشوملي':'SHM',
+};
+function generateProjectId(district, center) {
+    const d = DISTRICT_CODES[district] || district.replace(/ال/g,'').slice(0,3).toUpperCase();
+    const c = CENTER_CODES[center]    || center.replace(/مركز ماء /g,'').slice(0,3).toUpperCase();
+    const prefix = `${d}-${c}`;
+    const count  = db.projects.filter(p => p.id.startsWith(prefix+'-')).length + 1;
+    return `${prefix}-${String(count).padStart(3,'0')}`;
+}
+
+function cascadeCenter() {
+    const district = document.getElementById('b_district').value;
+    const sel = document.getElementById('b_center');
+    sel.innerHTML = '<option value="">— اختر المركز —</option>';
+    if (district && DISTRICTS[district]) {
+        DISTRICTS[district].forEach(c => {
+            const o = document.createElement('option');
+            o.value = o.textContent = c;
+            sel.appendChild(o);
+        });
+    }
+    validateField('b_center');
+    saveDraft();
+}
+
+/* ─── DB load / save ─── */
+function loadDB() {
+    try {
+        const raw = localStorage.getItem(DB_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        Object.keys(EMPTY_DB()).forEach(t => {
+            if (Array.isArray(parsed[t])) db[t] = parsed[t];
+        });
+    } catch { db = EMPTY_DB(); }
+}
+function saveDB() {
+    try { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+    catch(e) { if (e.name==='QuotaExceededError') showToast('⚠️ امتلأت الذاكرة! صدّر البيانات أولاً.','error'); }
+}
+/* helper shortcuts */
+function gv(id){ return document.getElementById(id)?.value||''; }
+function gc(id){ return !!document.getElementById(id)?.checked; }
+
+/* ─── CSV safety ─── */
+function csvSafe(val) {
+    const s = String(val||'').replace(/"/g,'""');
+    return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+}
+
+/* ─── Toast ─── */
+let toastTimer = null;
+function showToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className=''; }, 3000);
+}
+
+/* ─── Tabs ─── */
+function switchTab(idx) {
+    currentTab = idx;
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===idx));
+    document.getElementById('btnPrev').disabled = (idx===0);
+    document.getElementById('btnNext').disabled = (idx===TABS.length-1);
+    updateProgress();
+}
+function navigateTab(dir) {
+    const next = currentTab + dir;
+    if (next>=0 && next<TABS.length) switchTab(next);
+}
+document.querySelectorAll('.tab-btn').forEach((btn,i) => {
+    btn.addEventListener('click', e => { e.preventDefault(); switchTab(i); });
+});
+
+/* ─── Progress ─── */
+function updateProgress() {
+    const all = document.querySelectorAll('[required]');
+    let filled = 0;
+    all.forEach(f => { if (f.value.trim()) filled++; });
+    const pct = all.length ? Math.round((filled/all.length)*100) : 0;
+    document.getElementById('progressFill').style.width = pct+'%';
+    document.getElementById('progressPct').textContent = pct+'%';
+}
+
+/* ─── Validators ─── */
+const validators = {
+    b_name:       v => v.length<2 ? 'أدخل اسم المجمع' : '',
+    b_district:   v => !v ? 'يرجى اختيار القضاء' : '',
+    b_center:     v => !v ? 'يرجى اختيار المركز' : '',
+    b_work_status:v => !v ? 'يرجى اختيار الحالة' : '',
+    b_year:       v => v && (v<1950||v>2030) ? 'السنة بين 1950 و 2030' : '',
+    b_capacity:   v => v && v<0 ? 'القيمة لا تكون سالبة' : '',
+    b_lng:        v => v && (+v<-180||+v>180) ? 'خط الطول بين -180 و 180' : '',
+    b_lat:        v => v && (+v<-90||+v>90)   ? 'خط العرض بين -90 و 90' : '',
+    e_trans:      v => v && v<0 ? 'القيمة لا تكون سالبة' : '',
+};
+function validateField(id) {
+    const el = document.getElementById(id);
+    const hint = document.getElementById('hint_'+id);
+    if (!el) return true;
+    let err = '';
+    if (el.required && !el.value.trim()) err = 'هذا الحقل مطلوب';
+    else if (validators[id]) err = validators[id](el.value);
+    if (err) {
+        el.classList.add('invalid'); el.classList.remove('valid');
+        if (hint) { hint.textContent=err; hint.className='field-hint error'; }
+        return false;
+    } else {
+        el.classList.remove('invalid');
+        if (el.value.trim()) el.classList.add('valid');
+        if (hint && !hint.className.includes('manual')) { hint.textContent=''; hint.className='field-hint'; }
+        return true;
+    }
+}
+document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input',  () => { validateField(el.id); updateProgress(); saveDraft(); });
+    el.addEventListener('change', () => { validateField(el.id); saveDraft(); });
+    el.addEventListener('blur',   () => validateField(el.id));
+});
+
+/* ─── Draft ─── */
+function saveDraft() {
+    try {
+        const d = {};
+        document.querySelectorAll('input,select,textarea').forEach(el => {
+            if (!el.id) return;
+            d[el.id] = el.type==='checkbox' ? el.checked : el.value;
+        });
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    } catch {}
+}
+function loadDraft() {
+    try {
+        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY));
+        if (!draft) return;
+        Object.keys(draft).forEach(key => {
+            const el = document.getElementById(key);
+            if (!el || draft[key]===undefined) return;
+            if (el.type==='checkbox') {
+                el.checked = !!draft[key];
+                if (el.checked) toggleOptional(key.replace('has_',''), true);
+            } else if (draft[key]) {
+                el.value = draft[key];
+            }
+        });
+        /* Restore district → centers */
+        const dist = document.getElementById('b_district');
+        if (dist && dist.value) cascadeCenter();
+        const center = document.getElementById('b_center');
+        if (center && draft['b_center']) center.value = draft['b_center'];
+        /* Restore conditional fields */
+        const hasAlt = document.getElementById('has_alt_power');
+        if (hasAlt) toggleOptional('alt_power', hasAlt.checked);
+        const hasBuilding = document.getElementById('has_building');
+        if (hasBuilding) toggleOptional('building', hasBuilding.checked);
+        /* Restore dynamic lists */
+        const pumpsEl = document.getElementById('n_pumps_data');
+        if (pumpsEl && pumpsEl.value) loadPumpsFromData(pumpsEl.value); else renderPumpRows();
+        const chemEl = document.getElementById('n_chem_data');
+        if (chemEl && chemEl.value) loadChemFromData(chemEl.value); else renderChemRows();
+        const gensEl = document.getElementById('n_gens_data');
+        if (gensEl && gensEl.value) loadGensFromData(gensEl.value); else renderGenRows();
+        const pipesEl = document.getElementById('n_pipes_data');
+        if (pipesEl && pipesEl.value) loadPipesFromData(pipesEl.value); else renderPipeRows();
+        const staffEl = document.getElementById('n_staff_data');
+        if (staffEl && staffEl.value) loadStaffFromData(staffEl.value); else renderStaffRows();
+        const villagesEl = document.getElementById('sd_villages_data');
+        if (villagesEl && villagesEl.value) loadVillagesFromData(villagesEl.value); else renderVillages();
+        const hoursEl = document.getElementById('n_hours_data');
+        if (hoursEl && hoursEl.value) loadHoursFromData(hoursEl.value); else renderHoursRows();
+    } catch { /* skip corrupted draft */ }
+}
+
+/* helper: average hours for given month indices */
+function _avgH(indices) {
+    const nums = indices.map(i => parseFloat(hoursData[MONTHS_KEY[i]])||null).filter(v=>v!==null);
+    return nums.length ? parseFloat((nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1)) : null;
+}
+
+/* ─── Save Project → relational tables ─── */
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    let isValid = true, firstErrorTab = -1;
+    this.querySelectorAll('[required]').forEach(field => {
+        if (!validateField(field.id)) {
+            isValid = false;
+            const tc = field.closest('.tab-content');
+            if (tc) {
+                const idx = parseInt(tc.dataset.tabIdx);
+                if (firstErrorTab===-1 || idx<firstErrorTab) firstErrorTab = idx;
+            }
+        }
+    });
+    if (!isValid) {
+        showToast('⚠️ يرجى تصحيح الحقول المطلوبة','error');
+        if (firstErrorTab>=0) switchTab(firstErrorTab);
+        return;
+    }
+
+    const pid = generateProjectId(gv('b_district'), gv('b_center'));
+    const now = new Date().toLocaleString('ar-IQ');
+
+    /* ── Table: projects ── */
+    db.projects.push({
+        id: pid, created_at: now,
+        district: gv('b_district'), center: gv('b_center'), name: gv('b_name'),
+        capacity: gv('b_capacity'), year: gv('b_year'), work_status: gv('b_work_status'),
+        river: gv('b_river'), river_status: gv('b_river_status'),
+        lat: gv('b_lat'), lng: gv('b_lng'),
+        e_source: gv('e_source'), e_total_power: gv('e_total_power'), e_trans: gv('e_trans'),
+        has_alt_power: gc('has_alt_power'), e_alt_type: gv('e_alt_type'), e_alt_power: gv('e_alt_power'),
+        u_condition: gv('u_condition'), u_fence: gv('u_fence'), u_intake: gv('u_intake'),
+        u_notes: gv('u_notes'), has_building: gc('has_building'), u_building_status: gv('u_building_status'),
+        n_notes: gv('n_notes'),
+        sd_served: gv('sd_served'), sd_deprived: gv('sd_deprived'),
+        sd_scarcity: gv('sd_scarcity'), sd_subscriptions: gv('sd_subscriptions'),
+    });
+
+    /* ── Table: pumps ── */
+    pumpRows.forEach(r => db.pumps.push({ project_id: pid, ...r }));
+
+    /* ── Table: chem ── */
+    chemRows.forEach(r => db.chem.push({ project_id: pid, ...r }));
+
+    /* ── Table: generators ── */
+    genRows.forEach(r => db.generators.push({ project_id: pid, ...r }));
+
+    /* ── Table: pipes ── */
+    pipeRows.forEach(r => db.pipes.push({ project_id: pid, ...r }));
+
+    /* ── Table: staff ── */
+    staffRows.forEach(r => db.staff.push({ project_id: pid, ...r }));
+
+    /* ── Table: hours (one row per month) ── */
+    hoursRows.forEach(r => {
+        const h = parseFloat(r.hours);
+        if (!isNaN(h) && r.month_key) {
+            const mi = MONTHS_KEY.indexOf(r.month_key);
+            db.hours.push({
+                project_id: pid,
+                month_key:  r.month_key,
+                month_name: MONTHS_AR[mi] || r.month_key,
+                season:     SUMMER_KEYS.has(r.month_key) ? 'صيف' : 'شتاء',
+                hours:      h,
+            });
+        }
+    });
+
+    /* ── Table: villages ── */
+    villageList.forEach(v => db.villages.push({ project_id: pid, name: v.name, service_pct: v.pct||null }));
+
+    saveDB();
+    updateDashboard();
+    renderRecords();
+
+    /* reset UI */
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('has-error'); b.classList.add('done'); });
+    this.reset();
+    document.querySelectorAll('input,select,textarea').forEach(el => el.classList.remove('valid','invalid'));
+    document.querySelectorAll('.field-hint').forEach(h => { h.textContent=''; h.className='field-hint'; });
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('done','has-error'));
+    pumpRows=[]; renderPumpRows();
+    chemRows=[]; renderChemRows();
+    genRows=[]; renderGenRows();
+    pipeRows=[]; renderPipeRows();
+    staffRows=[]; renderStaffRows();
+    villageList=[]; renderVillages();
+    hoursRows=[]; renderHoursRows();
+    try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    updateProgress();
+    switchTab(0);
+    showToast('✅ تم حفظ المشروع بنجاح!','success');
+});
+
+/* ─── Dashboard ─── */
+function updateDashboard() {
+    document.getElementById('statCount').textContent = db.projects.length;
+    const active  = db.projects.filter(p=>p.work_status==='تعمل').length;
+    const stopped = db.projects.filter(p=>p.work_status==='متوقفة').length;
+    document.getElementById('statActive').textContent = active+' / '+stopped;
+    if (db.projects.length>0) document.getElementById('statTime').textContent = db.projects[db.projects.length-1].created_at;
+    document.getElementById('recordsBadge').textContent = db.projects.length;
+}
+
+/* ─── Records ─── */
+function renderRecords() {
+    const list = document.getElementById('recordsList');
+    if (db.projects.length===0) {
+        list.innerHTML='<div class="empty-state"><div class="icon">📭</div><p>لا توجد مشاريع مسجلة بعد</p></div>';
+        return;
+    }
+    list.innerHTML = [...db.projects].reverse().map((item,i) => {
+        const realIdx = db.projects.length-1-i;
+        const pumpCount = db.pumps.filter(r=>r.project_id===item.id).length;
+        const staffCount = db.staff.filter(r=>r.project_id===item.id).length;
+        return `<div class="record-item">
+            <span class="status-dot ${item.work_status||''}"></span>
+            <div style="flex:1;min-width:0;">
+                <div class="record-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.name||'—')}</div>
+                <div class="record-meta">${escapeHtml(item.district||'')} · ${escapeHtml(item.center||'')} · ${escapeHtml(item.work_status||'')} · ⚙️${pumpCount} 👤${staffCount}</div>
+            </div>
+            <button class="record-delete" onclick="openDeleteModal(${realIdx})">حذف</button>
+        </div>`;
+    }).join('');
+}
+function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ─── Delete ─── */
+function openDeleteModal(idx) { deleteIndex=idx; document.getElementById('deleteModal').classList.add('open'); }
+function confirmDelete() {
+    if (deleteIndex>=0 && deleteIndex<db.projects.length) {
+        const pid = db.projects[deleteIndex].id;
+        db.projects.splice(deleteIndex, 1);
+        /* remove all child records */
+        ['pumps','chem','generators','pipes','staff','hours','villages'].forEach(t => {
+            db[t] = db[t].filter(r => r.project_id !== pid);
+        });
+        saveDB(); updateDashboard(); renderRecords();
+        showToast('🗑️ تم الحذف','warn');
+    }
+    deleteIndex=-1; closeModal('deleteModal');
+}
+
+/* ─── Modals ─── */
+function openExportModal() {
+    if (db.projects.length===0) { showToast('⚠️ لا توجد بيانات للتصدير','error'); return; }
+    document.getElementById('exportCount').textContent = db.projects.length;
+    document.getElementById('exportModal').classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+    ov.addEventListener('click', function(e) { if (e.target===this) this.classList.remove('open'); });
+});
+
+/* ─── Optional sections ─── */
+function toggleOptional(prefix, forceState) {
+    const body = document.getElementById(prefix+'_section');
+    const cb   = document.getElementById('has_'+prefix);
+    if (!body) return;
+    const show = (forceState!==undefined) ? forceState : !cb.checked;
+    if (cb) cb.checked = show;
+    body.style.display = show ? 'block' : 'none';
+}
+
+/* ─── GPS ─── */
+function getGPS() {
+    if (!navigator.geolocation) { showToast('⚠️ المتصفح لا يدعم GPS','error'); return; }
+    const btn = document.getElementById('btnGps');
+    btn.disabled=true; btn.textContent='⏳ جاري التحديد...';
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            document.getElementById('b_lat').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('b_lng').value = pos.coords.longitude.toFixed(6);
+            validateField('b_lat'); validateField('b_lng'); saveDraft();
+            btn.disabled=false; btn.innerHTML='📡 GPS';
+            showToast('✅ تم تحديد الموقع','success');
+        },
+        err => {
+            btn.disabled=false; btn.innerHTML='📡 GPS';
+            const msgs={1:'تم رفض الإذن',2:'تعذّر التحديد',3:'انتهت المهلة'};
+            showToast('⚠️ '+(msgs[err.code]||'خطأ GPS'),'error');
+        },
+        {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+    );
+}
+
+/* ══════════════════════════════════════════════
+   PUMPS — Dynamic list
+   ══════════════════════════════════════════════ */
+const PUMP_FUNCTIONS  = ['الدفع','السحب','الغسيل العكسي','ضاغطات الهواء'];
+const PUMP_CONDITIONS = ['جيدة','متوسطة','ضعيفة','صيانة فورية','متوقفة','احتياط'];
+const PUMP_TYPES      = ['أفقية','عمودية'];
+let pumpRows = [];
+
+function renderPumpRows() {
+    const c = document.getElementById('pumpRowsContainer');
+    if (!c) return;
+    if (pumpRows.length===0) {
+        c.innerHTML=`<div class="empty-state" style="padding:24px 0 8px;"><div class="icon">⚙️</div><p>لم يتم إضافة أي مضخة — اضغط الزر أدناه للإضافة</p></div>`;
+    } else {
+        c.innerHTML = pumpRows.map((row,i) => `
+        <div class="pipe-entry">
+            <div class="pipe-entry-header">
+                <span class="pipe-entry-title">⚙️ مضخة #${i+1} — ${escapeHtml(row.func||'')}</span>
+                <button type="button" class="btn-remove-pipe" onclick="removePumpRow(${i})">🗑️ حذف</button>
+            </div>
+            <div class="pipe-entry-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>وظيفة المضخة</label>
+                        <select onchange="updatePumpField(${i},'func',this.value)">
+                            ${PUMP_FUNCTIONS.map(f=>`<option value="${f}" ${row.func===f?'selected':''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>حالة المضخة</label>
+                        <select onchange="updatePumpField(${i},'condition',this.value)">
+                            ${PUMP_CONDITIONS.map(c=>`<option value="${c}" ${row.condition===c?'selected':''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع المضخة</label>
+                        <select onchange="updatePumpField(${i},'type',this.value)">
+                            ${PUMP_TYPES.map(t=>`<option value="${t}" ${row.type===t?'selected':''}>${t}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>تصريف المضخة (م³/ساعة)</label>
+                        <input type="number" min="0" step="0.1" placeholder="0" value="${row.flow||''}" oninput="updatePumpField(${i},'flow',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>ضغط المضخة (م)</label>
+                        <input type="number" min="0" step="0.1" placeholder="0" value="${row.pressure||''}" oninput="updatePumpField(${i},'pressure',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>القدرة الكهربائية (kW)</label>
+                        <input type="number" min="0" step="0.1" placeholder="0" value="${row.power||''}" oninput="updatePumpField(${i},'power',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>سنة التشغيل</label>
+                        <input type="number" min="1950" max="2030" step="1" placeholder="مثال: 2015" value="${row.year||''}" oninput="updatePumpField(${i},'year',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>منشأ المضخة</label>
+                        <input type="text" maxlength="60" placeholder="مثال: ألماني، ياباني..." value="${escapeHtml(row.origin||'')}" oninput="updatePumpField(${i},'origin',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>الرقم المتسلسل</label>
+                        <input type="text" maxlength="60" placeholder="S/N" value="${escapeHtml(row.serial||'')}" oninput="updatePumpField(${i},'serial',this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>`).join('');
+    }
+    syncPumpsData();
+}
+function addPumpRow() {
+    pumpRows.push({func:'الدفع',condition:'جيدة',type:'أفقية',flow:'',pressure:'',power:'',year:'',origin:'',serial:''});
+    renderPumpRows();
+}
+function removePumpRow(idx) { pumpRows.splice(idx,1); renderPumpRows(); }
+function updatePumpField(idx,field,value) {
+    if (pumpRows[idx]) {
+        pumpRows[idx][field]=value;
+        if (field==='func') {
+            const headers = document.querySelectorAll('#pumpRowsContainer .pipe-entry-title');
+            if (headers[idx]) headers[idx].textContent = `⚙️ مضخة #${idx+1} — ${value}`;
+        }
+        syncPumpsData();
+    }
+}
+function syncPumpsData() {
+    const el = document.getElementById('n_pumps_data');
+    if (el) el.value = JSON.stringify(pumpRows);
+    try { saveDraft(); } catch {}
+}
+function loadPumpsFromData(json) {
+    try { const d=JSON.parse(json); if (Array.isArray(d)){pumpRows=d;renderPumpRows();} }
+    catch { pumpRows=[]; renderPumpRows(); }
+}
+
+/* ══════════════════════════════════════════════
+   CHEM — Dynamic list
+   ══════════════════════════════════════════════ */
+const CHEM_STATUSES       = ['عامل','متوقف','صيانة فورية'];
+const CHEM_FILTER_METHODS = ['الشب','ACH','أخرى'];
+const CHEM_STERIL_METHODS = ['منظومة هايبو','منظومة غاز'];
+let chemRows = [];
+
+function renderChemRows() {
+    const c = document.getElementById('chemRowsContainer');
+    if (!c) return;
+    if (chemRows.length===0) {
+        c.innerHTML=`<div class="empty-state" style="padding:24px 0 8px;"><div class="icon">🧪</div><p>لم يتم إضافة أي جهاز — اضغط الزر أدناه للإضافة</p></div>`;
+    } else {
+        c.innerHTML = chemRows.map((row,i) => {
+            const methods = (row.type==='تعقيم') ? CHEM_STERIL_METHODS : CHEM_FILTER_METHODS;
+            const isGas   = row.type==='تعقيم' && row.method==='منظومة غاز';
+            return `
+        <div class="pipe-entry">
+            <div class="pipe-entry-header">
+                <span class="pipe-entry-title">🧪 جهاز #${i+1} — ${escapeHtml(row.type||'')} (${escapeHtml(row.method||'')})</span>
+                <button type="button" class="btn-remove-pipe" onclick="removeChemRow(${i})">🗑️ حذف</button>
+            </div>
+            <div class="pipe-entry-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>نوع الجهاز</label>
+                        <select onchange="updateChemField(${i},'type',this.value,true)">
+                            <option value="تصفية" ${row.type==='تصفية'?'selected':''}>تصفية 🟡</option>
+                            <option value="تعقيم" ${row.type==='تعقيم'?'selected':''}>تعقيم 🟢</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الحالة</label>
+                        <select onchange="updateChemField(${i},'status',this.value)">
+                            ${CHEM_STATUSES.map(s=>`<option value="${s}" ${row.status===s?'selected':''}>${s}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الطريقة</label>
+                        <select onchange="updateChemField(${i},'method',this.value,true)">
+                            ${methods.map(m=>`<option value="${m}" ${row.method===m?'selected':''}>${m}</option>`).join('')}
+                        </select>
+                    </div>
+                    ${isGas ? `
+                    <div class="form-group">
+                        <label>عدد القناني</label>
+                        <input type="number" min="0" step="1" placeholder="0" value="${row.cylinders||''}" oninput="updateChemField(${i},'cylinders',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>حجم القنينة (كغم)</label>
+                        <input type="number" min="0" step="0.1" placeholder="0" value="${row.cylinder_size||''}" oninput="updateChemField(${i},'cylinder_size',this.value)">
+                    </div>` : ''}
+                </div>
+            </div>
+        </div>`;
+        }).join('');
+    }
+    syncChemData();
+}
+function addChemRow() {
+    chemRows.push({type:'تصفية',status:'عامل',method:'الشب',cylinders:'',cylinder_size:''});
+    renderChemRows();
+}
+function removeChemRow(idx) { chemRows.splice(idx,1); renderChemRows(); }
+function updateChemField(idx,field,value,rerender) {
+    if (chemRows[idx]) {
+        chemRows[idx][field]=value;
+        if (field==='type') chemRows[idx].method = (value==='تعقيم') ? 'منظومة هايبو' : 'الشب';
+        if (rerender) { renderChemRows(); return; }
+        syncChemData();
+    }
+}
+function syncChemData() {
+    const el = document.getElementById('n_chem_data');
+    if (el) el.value = JSON.stringify(chemRows);
+    try { saveDraft(); } catch {}
+}
+function loadChemFromData(json) {
+    try { const d=JSON.parse(json); if (Array.isArray(d)){chemRows=d;renderChemRows();} }
+    catch { chemRows=[]; renderChemRows(); }
+}
+
+/* ══════════════════════════════════════════════
+   GENERATORS — Dynamic list
+   ══════════════════════════════════════════════ */
+const GEN_STATUSES = ['تعمل','عاطلة'];
+let genRows = [];
+
+function renderGenRows() {
+    const c = document.getElementById('genRowsContainer');
+    if (!c) return;
+    if (genRows.length===0) {
+        c.innerHTML=`<div class="empty-state" style="padding:16px 0 8px;"><div class="icon">🔋</div><p>لم يتم إضافة أي مولدة</p></div>`;
+    } else {
+        c.innerHTML = genRows.map((row,i) => `
+        <div class="pipe-entry">
+            <div class="pipe-entry-header">
+                <span class="pipe-entry-title">🔋 مولدة #${i+1}${row.kva?' — '+row.kva+' KVA':''}</span>
+                <button type="button" class="btn-remove-pipe" onclick="removeGenRow(${i})">🗑️ حذف</button>
+            </div>
+            <div class="pipe-entry-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الحالة</label>
+                        <select onchange="updateGenField(${i},'status',this.value)">
+                            ${GEN_STATUSES.map(s=>`<option value="${s}" ${row.status===s?'selected':''}>${s}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>حجم المولدة (KVA)</label>
+                        <input type="number" min="0" max="9999" step="1" placeholder="0" value="${row.kva||''}" oninput="updateGenField(${i},'kva',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>سنة التشغيل</label>
+                        <input type="number" min="1950" max="2030" step="1" placeholder="مثال: 2018" value="${row.start_date||''}" oninput="updateGenField(${i},'start_date',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ آخر صيانة</label>
+                        <input type="month" value="${row.maint_date||''}" onchange="updateGenField(${i},'maint_date',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>المنشأ</label>
+                        <input type="text" maxlength="60" placeholder="مثال: ألماني..." value="${escapeHtml(row.origin||'')}" oninput="updateGenField(${i},'origin',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>الرقم التسلسلي</label>
+                        <input type="text" maxlength="60" placeholder="S/N" value="${escapeHtml(row.serial||'')}" oninput="updateGenField(${i},'serial',this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>`).join('');
+    }
+    syncGensData();
+}
+function addGenRow() {
+    genRows.push({status:'تعمل',kva:'',start_date:'',maint_date:'',origin:'',serial:''});
+    renderGenRows();
+}
+function removeGenRow(idx) { genRows.splice(idx,1); renderGenRows(); }
+function updateGenField(idx,field,value) {
+    if (genRows[idx]) {
+        genRows[idx][field]=value;
+        if (field==='kva') {
+            const headers=document.querySelectorAll('#genRowsContainer .pipe-entry-title');
+            if (headers[idx]) headers[idx].textContent=`🔋 مولدة #${idx+1}${value?' — '+value+' KVA':''}`;
+        }
+        syncGensData();
+    }
+}
+function syncGensData() {
+    const el=document.getElementById('n_gens_data');
+    if (el) el.value=JSON.stringify(genRows);
+    try { saveDraft(); } catch {}
+}
+function loadGensFromData(json) {
+    try { const d=JSON.parse(json); if (Array.isArray(d)){genRows=d;renderGenRows();} }
+    catch { genRows=[]; renderGenRows(); }
+}
+
+/* ══════════════════════════════════════════════
+   OPERATING HOURS
+   ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   OPERATING HOURS — Dynamic rows (like pipes)
+   ══════════════════════════════════════════════ */
+const MONTHS_AR  = ['كانون الثاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين الثاني','كانون الأول'];
+const MONTHS_KEY = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const SUMMER_KEYS = new Set(['may','jun','jul','aug','sep','oct']);
+const WINTER_KEYS = new Set(['nov','dec','jan','feb','mar','apr']);
+let hoursRows = []; /* [{month_key, hours}] */
+
+function renderHoursRows() {
+    const c = document.getElementById('hoursRowsContainer');
+    if (!c) return;
+    if (hoursRows.length===0) {
+        c.innerHTML=`<div class="empty-state" style="padding:24px 0 8px;"><div class="icon">🕐</div><p>لم يتم إضافة أي شهر — اضغط الزر أدناه للإضافة</p></div>`;
+    } else {
+        c.innerHTML = hoursRows.map((row,i) => {
+            const isSummer = SUMMER_KEYS.has(row.month_key);
+            const badge = isSummer
+                ? `<span class="season-badge summer" style="font-size:11px;padding:2px 8px;border-radius:99px;background:#fff3cd;color:#856404;font-weight:700;">☀️ صيف</span>`
+                : `<span class="season-badge winter" style="font-size:11px;padding:2px 8px;border-radius:99px;background:#cfe2ff;color:#084298;font-weight:700;">❄️ شتاء</span>`;
+            return `
+            <div class="pipe-entry">
+                <div class="pipe-entry-header">
+                    <span class="pipe-entry-title">🕐 ${escapeHtml(MONTHS_AR[MONTHS_KEY.indexOf(row.month_key)]||row.month_key)} ${badge}</span>
+                    <button type="button" class="btn-remove-pipe" onclick="removeHoursRow(${i})">🗑️ حذف</button>
+                </div>
+                <div class="pipe-entry-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>الشهر</label>
+                            <select onchange="updateHoursRow(${i},'month_key',this.value)">
+                                ${MONTHS_KEY.map((k,mi)=>`<option value="${k}" ${row.month_key===k?'selected':''}>${MONTHS_AR[mi]}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>معدل ساعات التشغيل اليومي</label>
+                            <input type="number" id="hrs_val_${i}" min="0" max="24" step="0.5" placeholder="ساعة/يوم"
+                                value="${row.hours||''}"
+                                oninput="updateHoursValue(${i},this)"
+                                onblur="validateHoursValue(${i},this)">
+                            <span id="hrs_err_${i}" style="color:var(--danger);font-size:11px;display:none;">⚠️ الحد الأقصى 24 ساعة</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+    updateHoursAverages();
+    syncHoursData();
+}
+function addHoursRow() {
+    /* suggest next month not yet added */
+    const used = new Set(hoursRows.map(r=>r.month_key));
+    const next = MONTHS_KEY.find(k=>!used.has(k)) || 'jan';
+    hoursRows.push({month_key: next, hours: ''});
+    renderHoursRows();
+}
+function removeHoursRow(idx) { hoursRows.splice(idx,1); renderHoursRows(); }
+function updateHoursRow(idx, field, value) {
+    if (hoursRows[idx]) { hoursRows[idx][field]=value; renderHoursRows(); }
+}
+function updateHoursValue(idx, el) {
+    /* update data without re-rendering DOM — keeps input focused */
+    if (!hoursRows[idx]) return;
+    const v = parseFloat(el.value);
+    const errEl = document.getElementById('hrs_err_'+idx);
+    if (!isNaN(v) && v > 24) {
+        if (errEl) errEl.style.display='inline';
+        el.style.borderColor='var(--danger)';
+    } else {
+        if (errEl) errEl.style.display='none';
+        el.style.borderColor='';
+    }
+    hoursRows[idx].hours = el.value;
+    updateHoursAverages();
+    syncHoursData();
+}
+function validateHoursValue(idx, el) {
+    /* on blur: clamp to 24 if exceeded */
+    const v = parseFloat(el.value);
+    if (!isNaN(v) && v > 24) {
+        el.value = 24;
+        hoursRows[idx].hours = 24;
+        const errEl = document.getElementById('hrs_err_'+idx);
+        if (errEl) errEl.style.display='none';
+        el.style.borderColor='';
+        updateHoursAverages();
+        syncHoursData();
+    }
+}
+function updateHoursAverages() {
+    const summerVals=[], winterVals=[], allVals=[];
+    hoursRows.forEach(r => {
+        const h = parseFloat(r.hours);
+        if (isNaN(h)||h==='') return;
+        allVals.push(h);
+        if (SUMMER_KEYS.has(r.month_key)) summerVals.push(h);
+        if (WINTER_KEYS.has(r.month_key)) winterVals.push(h);
+    });
+    const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1)+'h' : '—';
+    document.getElementById('avg_summer').textContent = avg(summerVals);
+    document.getElementById('avg_winter').textContent = avg(winterVals);
+    document.getElementById('avg_annual').textContent = avg(allVals);
+}
+function syncHoursData() {
+    const el=document.getElementById('n_hours_data');
+    if (el) el.value=JSON.stringify(hoursRows);
+    try { saveDraft(); } catch {}
+}
+function loadHoursFromData(json) {
+    try {
+        const d=JSON.parse(json);
+        if (Array.isArray(d)) { hoursRows=d; renderHoursRows(); return; }
+        /* backward compat: old wide-format object */
+        if (d && typeof d==='object') {
+            hoursRows = MONTHS_KEY
+                .filter(k => d[k]!==undefined && d[k]!=='' && d[k]!==null)
+                .map(k => ({month_key:k, hours: d[k]}));
+            renderHoursRows();
+        }
+    } catch { hoursRows=[]; renderHoursRows(); }
+}
+
+/* ══════════════════════════════════════════════
+   STAFF — Dynamic list
+   ══════════════════════════════════════════════ */
+const EDUCATION_LEVELS = ['بكلوريوس','معهد','اعدادية','متوسطة','ابتدائية','يقرأ ويكتب','غير ذلك'];
+const JOB_ROLES = ['مسؤول','مشغل','حارس'];
+let staffRows = [];
+
+function renderStaffRows() {
+    const c = document.getElementById('staffRowsContainer');
+    if (!c) return;
+    if (staffRows.length===0) {
+        c.innerHTML=`<div class="empty-state" style="padding:24px 0 8px;"><div class="icon">👤</div><p>لم يتم إضافة أي كادر — اضغط الزر أدناه للإضافة</p></div>`;
+    } else {
+        c.innerHTML = staffRows.map((row,i) => `
+        <div class="pipe-entry">
+            <div class="pipe-entry-header">
+                <span class="pipe-entry-title">👤 كادر #${i+1}${row.name?' — '+escapeHtml(row.name):''}</span>
+                <button type="button" class="btn-remove-pipe" onclick="removeStaffRow(${i})">🗑️ حذف</button>
+            </div>
+            <div class="pipe-entry-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الاسم</label>
+                        <input type="text" maxlength="80" placeholder="الاسم الكامل" value="${escapeHtml(row.name||'')}" oninput="updateStaffField(${i},'name',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>التحصيل الدراسي</label>
+                        <select onchange="updateStaffField(${i},'education',this.value)">
+                            ${EDUCATION_LEVELS.map(e=>`<option value="${e}" ${row.education===e?'selected':''}>${e}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان الوظيفي</label>
+                        <input type="text" maxlength="80" placeholder="مثال: مهندس مدني" value="${escapeHtml(row.title||'')}" oninput="updateStaffField(${i},'title',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>الوظيفة</label>
+                        <select onchange="updateStaffField(${i},'role',this.value)">
+                            ${JOB_ROLES.map(r=>`<option value="${r}" ${row.role===r?'selected':''}>${r}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>`).join('');
+    }
+    syncStaffData();
+}
+function addStaffRow() { staffRows.push({name:'',education:'بكلوريوس',title:'',role:'مشغل'}); renderStaffRows(); }
+function removeStaffRow(idx) { staffRows.splice(idx,1); renderStaffRows(); }
+function updateStaffField(idx,field,value) {
+    if (staffRows[idx]) {
+        staffRows[idx][field]=value;
+        if (field==='name') {
+            const headers=document.querySelectorAll('#staffRowsContainer .pipe-entry-title');
+            if (headers[idx]) headers[idx].textContent=`👤 كادر #${idx+1}${value?' — '+value:''}`;
+        }
+        syncStaffData();
+    }
+}
+function syncStaffData() {
+    const el=document.getElementById('n_staff_data');
+    if (el) el.value=JSON.stringify(staffRows);
+    try { saveDraft(); } catch {}
+}
+function loadStaffFromData(json) {
+    try { const d=JSON.parse(json); if (Array.isArray(d)){staffRows=d;renderStaffRows();} }
+    catch { staffRows=[]; renderStaffRows(); }
+}
+
+/* ══════════════════════════════════════════════
+   VILLAGES — with service percentage
+   ══════════════════════════════════════════════ */
+let villageList = []; /* [{name, pct}] */
+
+function renderVillages() {
+    const c = document.getElementById('villagesContainer');
+    if (!c) return;
+    if (villageList.length===0) {
+        c.innerHTML=`<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;">لا توجد مناطق مضافة بعد</div>`;
+    } else {
+        c.innerHTML = villageList.map((v,i) => `
+        <div class="village-entry">
+            <input type="text" maxlength="80" placeholder="اسم القرية / المنطقة"
+                value="${escapeHtml(v.name||'')}" oninput="updateVillageField(${i},'name',this.value)">
+            <div style="display:flex;align-items:center;gap:6px;">
+                <input class="pct-input" type="number" min="0" max="100" step="1" placeholder="%"
+                    value="${v.pct||''}" oninput="updateVillageField(${i},'pct',this.value)" style="width:70px;padding:8px 10px;">
+                <span class="pct-label">%</span>
+            </div>
+            <button type="button" class="btn-remove-pipe" onclick="removeVillage(${i})" style="padding:8px 12px;">✕</button>
+        </div>`).join('');
+    }
+    syncVillagesData();
+}
+function addVillage() {
+    villageList.push({name:'',pct:''});
+    renderVillages();
+}
+function removeVillage(idx) { villageList.splice(idx,1); renderVillages(); }
+function updateVillageField(idx,field,value) {
+    if (villageList[idx]) { villageList[idx][field]=value; syncVillagesData(); }
+}
+function syncVillagesData() {
+    const el=document.getElementById('sd_villages_data');
+    if (el) el.value=JSON.stringify(villageList);
+    try { saveDraft(); } catch {}
+}
+function loadVillagesFromData(json) {
+    try {
+        const d=JSON.parse(json);
+        if (Array.isArray(d)) {
+            /* Support both old string format and new object format */
+            villageList = d.map(v => typeof v==='string' ? {name:v,pct:''} : v);
+            renderVillages();
+        }
+    } catch { villageList=[]; renderVillages(); }
+}
+
+/* ══════════════════════════════════════════════
+   PIPE ROWS — unchanged
+   ══════════════════════════════════════════════ */
+const PIPE_MATERIALS  = ['دكتايل','اهين','اسبست','UPVC','بولي اثلين'];
+const PIPE_CONDITIONS = ['جيدة','متوسطة','تحتاج استبدال'];
+let pipeRows = [];
+
+function renderPipeRows() {
+    const c = document.getElementById('pipeRowsContainer');
+    if (!c) return;
+    if (pipeRows.length===0) {
+        c.innerHTML=`<div class="empty-state" style="padding:24px 0 8px;"><div class="icon">🔧</div><p>لم يتم إضافة أي قطر — اضغط الزر أدناه للإضافة</p></div>`;
+    } else {
+        c.innerHTML = pipeRows.map((row,i) => `
+        <div class="pipe-entry">
+            <div class="pipe-entry-header">
+                <span class="pipe-entry-title">🔩 قطر أنبوب #${i+1}</span>
+                <button type="button" class="btn-remove-pipe" onclick="removePipeRow(${i})">🗑️ حذف</button>
+            </div>
+            <div class="pipe-entry-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>مادة الأنبوب</label>
+                        <select onchange="updatePipeField(${i},'material',this.value)">
+                            ${PIPE_MATERIALS.map(m=>`<option value="${m}" ${row.material===m?'selected':''}>${m}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>قطر الأنبوب (ملم)</label>
+                        <input type="number" min="0" step="1" placeholder="0" value="${row.diameter||''}" oninput="updatePipeField(${i},'diameter',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>طول الأنبوب (كم)</label>
+                        <input type="number" min="0" step="0.1" placeholder="0" value="${row.length||''}" oninput="updatePipeField(${i},'length',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>سنة المد</label>
+                        <input type="number" min="1950" max="2030" step="1" placeholder="مثال: 2010" value="${row.year||''}" oninput="updatePipeField(${i},'year',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>حالة الشبكة</label>
+                        <select onchange="updatePipeField(${i},'condition',this.value)">
+                            ${PIPE_CONDITIONS.map(c=>`<option value="${c}" ${row.condition===c?'selected':''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>`).join('');
+    }
+    syncPipesData();
+}
+function addPipeRow() { pipeRows.push({material:'دكتايل',diameter:'',length:'',year:'',condition:'جيدة'}); renderPipeRows(); }
+function removePipeRow(idx) { pipeRows.splice(idx,1); renderPipeRows(); }
+function updatePipeField(idx,field,value) { if (pipeRows[idx]){pipeRows[idx][field]=value;syncPipesData();} }
+function syncPipesData() {
+    const el=document.getElementById('n_pipes_data');
+    if (el) el.value=JSON.stringify(pipeRows);
+    try { saveDraft(); } catch {}
+}
+function loadPipesFromData(json) {
+    try { const d=JSON.parse(json); if (Array.isArray(d)){pipeRows=d;renderPipeRows();} }
+    catch { pipeRows=[]; renderPipeRows(); }
+}
+
+/* ══════════════════════════════════════════════
+   EXPORT ENGINE — ZIP / JSON / SQL
+   ══════════════════════════════════════════════ */
+
+/* Convert array of objects → CSV string */
+function arrayToCSV(rows) {
+    if (!rows || rows.length===0) return '';
+    const headers = Object.keys(rows[0]);
+    const lines = [headers.map(h=>`"${h}"`).join(',')];
+    rows.forEach(row => {
+        lines.push(headers.map(h => {
+            const v = row[h];
+            if (v===null||v===undefined) return '""';
+            const s = String(v).replace(/"/g,'""');
+            return `"${/^[=+\-@\t\r]/.test(s)?'\''+s:s}"`;
+        }).join(','));
+    });
+    return '\ufeff'+lines.join('\n'); /* BOM for Excel UTF-8 */
+}
+
+/* Generic file download */
+function downloadFile(content, filename, mime) {
+    const blob = new Blob([content], {type: mime+';charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
+}
+
+/* Generate PostgreSQL SQL */
+function generateSQL() {
+    const today  = new Date().toISOString();
+    const tables = ['projects','pumps','chem','generators','pipes','staff','hours','villages'];
+    let sql = `-- ============================================================\n`;
+    sql    += `-- Babil Water Management System — PostgreSQL Database Dump\n`;
+    sql    += `-- Generated: ${today}\n`;
+    sql    += `-- Usage: psql -U postgres -d babil_water -f this_file.sql\n`;
+    sql    += `-- ============================================================\n\n`;
+    sql    += `SET client_encoding = 'UTF8';\n\n`;
+
+    tables.forEach(t => {
+        const rows = db[t];
+        if (!rows || rows.length===0) return;
+        const cols = Object.keys(rows[0]);
+
+        /* CREATE TABLE */
+        sql += `-- Table: ${t}\n`;
+        sql += `CREATE TABLE IF NOT EXISTS ${t} (\n`;
+        const colDefs = cols.map(c => {
+            if (c==='id') return `    "id" TEXT PRIMARY KEY`;
+            if (c==='project_id') return `    "project_id" TEXT REFERENCES projects("id")`;
+            return `    "${c}" TEXT`;
+        });
+        sql += colDefs.join(',\n') + '\n);\n\n';
+
+        /* INSERT rows */
+        rows.forEach(row => {
+            const vals = cols.map(c => {
+                const v = row[c];
+                if (v===null||v===undefined||v==='') return 'NULL';
+                return `'${String(v).replace(/'/g,"''")}'`;
+            });
+            sql += `INSERT INTO ${t} (${cols.map(c=>`"${c}"`).join(', ')}) VALUES (${vals.join(', ')});\n`;
+        });
+        sql += '\n';
+    });
+    return sql;
+}
+
+/* ─── Full ZIP export (CSV + JSON + SQL + README) ─── */
+async function doExport(clearAfter) {
+    closeModal('exportModal');
+    if (db.projects.length===0) return;
+    if (typeof JSZip==='undefined') {
+        showToast('⚠️ تعذّر تحميل JSZip — تحقق من الاتصال بالإنترنت','error');
+        return;
+    }
+
+    const today  = new Date().toISOString().slice(0,10);
+    const tables = ['projects','pumps','chem','generators','pipes','staff','hours','villages'];
+    const zip    = new JSZip();
+
+    /* ── 1. CSV files (csv/ folder) ── */
+    const csvFolder = zip.folder('csv');
+    tables.forEach(t => {
+        if (db[t].length > 0) csvFolder.file(`${t}.csv`, arrayToCSV(db[t]));
+    });
+
+    /* ── 2. JSON file (json/ folder) ── */
+    const jsonData = {
+        _meta: {
+            description: 'Babil Water Management System — Relational Export',
+            generated_at: new Date().toISOString(),
+            project_count: db.projects.length,
+            id_format: 'DISTRICT_CODE-CENTER_CODE-NNN',
+            tables: tables,
+            python_quick_start: [
+                'import json, pandas as pd',
+                "with open('json/database.json') as f: d = json.load(f)",
+                "projects = pd.DataFrame(d['projects'])",
+                "pumps    = pd.DataFrame(d['pumps'])",
+                "merged   = projects.merge(pumps, left_on='id', right_on='project_id')",
+            ].join('\n'),
+        },
+        ...Object.fromEntries(tables.map(t => [t, db[t]])),
+    };
+    zip.folder('json').file('database.json', JSON.stringify(jsonData, null, 2));
+
+    /* ── 3. SQL file (sql/ folder) ── */
+    zip.folder('sql').file('database.sql', generateSQL());
+
+    /* ── 4. README ── */
+    const readme = [
+        '╔═══════════════════════════════════════════════════════╗',
+        '║    Babil Water Management System — Database Export    ║',
+        '╚═══════════════════════════════════════════════════════╝',
+        '',
+        `Generated : ${new Date().toISOString()}`,
+        `Projects  : ${db.projects.length}`,
+        `ID Format : DISTRICT_CODE-CENTER_CODE-NNN`,
+        '           Example: MSB-SHN-001 = المسيب / سدة الهندية / #1',
+        '',
+        '─────────────────────────────────────────────────────────',
+        'FOLDER STRUCTURE',
+        '─────────────────────────────────────────────────────────',
+        'csv/            → One CSV file per table',
+        '  projects.csv  → Core project data  (PK: id)',
+        '  pumps.csv     → Pumps              (FK: project_id)',
+        '  chem.csv      → Chemical devices   (FK: project_id)',
+        '  generators.csv→ Generators         (FK: project_id)',
+        '  pipes.csv     → Network pipes      (FK: project_id)',
+        '  staff.csv     → Station staff      (FK: project_id)',
+        '  hours.csv     → Operating hours    (FK: project_id)',
+        '  villages.csv  → Served areas       (FK: project_id)',
+        '',
+        'json/database.json → Full relational JSON',
+        'sql/database.sql   → PostgreSQL CREATE TABLE + INSERT',
+        '',
+        '─────────────────────────────────────────────────────────',
+        'PYTHON USAGE',
+        '─────────────────────────────────────────────────────────',
+        'import json, pandas as pd',
+        '',
+        '# Option A — JSON',
+        "with open('json/database.json') as f: d = json.load(f)",
+        "projects = pd.DataFrame(d['projects'])",
+        "pumps    = pd.DataFrame(d['pumps'])",
+        "merged   = projects.merge(pumps, left_on='id', right_on='project_id')",
+        '',
+        '# Option B — CSV',
+        "projects = pd.read_csv('csv/projects.csv')",
+        "hours    = pd.read_csv('csv/hours.csv')",
+        "summer   = hours[hours['season']=='صيف'].groupby('project_id')['hours'].mean()",
+        '',
+        '─────────────────────────────────────────────────────────',
+        'POSTGRESQL USAGE',
+        '─────────────────────────────────────────────────────────',
+        '# Method A — run the SQL file directly:',
+        '  psql -U postgres -d babil_water -f sql/database.sql',
+        '',
+        '# Method B — COPY from CSV (after creating tables):',
+        "  COPY projects FROM '/path/csv/projects.csv' CSV HEADER ENCODING 'UTF8';",
+        "  COPY pumps    FROM '/path/csv/pumps.csv'    CSV HEADER ENCODING 'UTF8';",
+        '  -- repeat for each table',
+    ].join('\n');
+    zip.file('README.txt', readme);
+
+    /* ── Generate & download ── */
+    const blob = await zip.generateAsync({type:'blob', compression:'DEFLATE', compressionOptions:{level:6}});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=`Babil_Water_DB_${today}.zip`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
+    showToast(`✅ تم تصدير ${db.projects.length} مشروع — ZIP كامل`, 'success');
+
+    if (clearAfter) {
+        db = EMPTY_DB();
+        try { localStorage.removeItem(DB_KEY); localStorage.removeItem(DRAFT_KEY); } catch {}
+        updateDashboard(); renderRecords();
+        document.getElementById('mainForm').reset();
+        document.querySelectorAll('input,select,textarea').forEach(el=>el.classList.remove('valid','invalid'));
+        updateProgress();
+        showToast('🔄 تم مسح البيانات، جلسة جديدة جاهزة','warn');
+    }
+}
+
+/* ─── Before unload warning ─── */
+window.addEventListener('beforeunload', e => {
+    const hasInput = Array.from(document.querySelectorAll('input,select,textarea'))
+        .some(el=>el.value.trim()!==''&&el.tagName!=='SELECT');
+    if (hasInput){e.preventDefault();e.returnValue='';}
+});
+
+/* ─── Init ─── */
+window.addEventListener('load', () => {
+    loadDB();
+    loadDraft();
+    if (pumpRows.length===0)    renderPumpRows();
+    if (chemRows.length===0)    renderChemRows();
+    if (genRows.length===0)     renderGenRows();
+    if (pipeRows.length===0)    renderPipeRows();
+    if (staffRows.length===0)   renderStaffRows();
+    if (hoursRows.length===0)   renderHoursRows();
+    if (villageList.length===0) renderVillages();
+    updateDashboard();
+    renderRecords();
+    updateProgress();
+    switchTab(0);
+});
+</script>
+
+<script>
+/* ── PWA Service Worker Registration ── */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showPwaToast('🔄 يتوفر تحديث جديد — أعد تشغيل التطبيق للتحديث');
+                        }
+                    });
+                });
+            })
+            .catch(() => {});
+    });
+}
+
+/* ── PWA Install Prompt ── */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    showPwaToast('📲 يمكنك تثبيت التطبيق على شاشتك الرئيسية', true);
+});
+
+function installPwa() {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(() => {
+        deferredInstallPrompt = null;
+        const btn = document.getElementById('pwa-install-btn');
+        if (btn) btn.remove();
+    });
+}
+
+function showPwaToast(msg, showInstallBtn = false) {
+    let toast = document.getElementById('pwa-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'pwa-toast';
+        toast.style.cssText = `
+            position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+            background:#0a3d6b;color:#fff;padding:12px 18px;border-radius:12px;
+            font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;
+            box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:9999;
+            display:flex;align-items:center;gap:10px;max-width:90vw;
+            animation:slideUp .3s ease;
+        `;
+        document.body.appendChild(toast);
+        const style = document.createElement('style');
+        style.textContent = `@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`;
+        document.head.appendChild(style);
+    }
+    toast.innerHTML = `<span>${msg}</span>`;
+    if (showInstallBtn) {
+        toast.innerHTML += `<button id="pwa-install-btn" onclick="installPwa()" style="background:#00b4d8;border:none;color:#fff;padding:6px 14px;border-radius:8px;font-family:'Cairo',sans-serif;font-weight:700;cursor:pointer;white-space:nowrap;">تثبيت</button>`;
+    }
+    toast.innerHTML += `<button onclick="this.closest('#pwa-toast').remove()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:16px;cursor:pointer;padding:0 4px;">✕</button>`;
+    if (!showInstallBtn) setTimeout(() => { if (toast.parentNode) toast.remove(); }, 5000);
+}
+</script>
+</body>
+</html>
