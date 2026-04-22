@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="مجمعات مائية">
-    <title>استمارة بيانات المجمعات المائية</title>
+    <meta name="apple-mobile-web-app-title" content="مشاريع مائية">
+    <title>استمارة ادخال بيانات المشاريع المائية</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -186,7 +186,7 @@
         <div class="header-icon">🌊</div>
         <div>
             <h1>مديرية ماء بابل</h1>
-            <p>استمارة ادخال بيانات المجمعات المائية</p>
+            <p>استمارة ادخال بيانات المشاريع المائية</p>
         </div>
     </div>
 </div>
@@ -243,7 +243,7 @@
                         <div class="field-hint" id="hint_b_district"></div>
                     </div>
                     <div class="form-group">
-                        <label>اسم المركز <span class="req">*</span></label>
+                        <label>اسم الناحية <span class="req">*</span></label>
                         <select id="b_center" required>
                             <option value="">— اختر القضاء أولاً —</option>
                         </select>
@@ -253,6 +253,10 @@
                         <label>اسم المجمع <span class="req">*</span></label>
                         <input type="text" id="b_name" required placeholder="أدخل اسم المجمع المائي" maxlength="120" autocomplete="off">
                         <div class="field-hint" id="hint_b_name"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>شعبة التشغيل</label>
+                        <input type="text" id="b_operation_div" value="مشروع تصفية" readonly>
                     </div>
                     <div class="form-group">
                         <label>الطاقة التصميمية (م³/ساعة)</label>
@@ -615,13 +619,13 @@ let db = EMPTY_DB();
 
 /* ─── Districts / Centers ─── */
 const DISTRICTS = {
-    'المسيب':    ['مركز ماء سدة الهندية','مركز ماء سوراء','مركز ماء المسيب','مركز ماء الاسكندرية','مركز ماء جرف النصر'],
-    'المحاويل':  ['مركز ماء المحاويل','مركز ماء الامام','مركز ماء النيل'],
-    'الحلة':     ['مركز ماء عنانة وبرنون','مركز ماء المعيميرة','مركز المدينة','مركز ماء ابي غرق'],
-    'الكفل':     ['مركز ماء الكفل'],
-    'كوثى':      ['مركز ماء كوثى'],
-    'القاسم':    ['مركز ماء الابراهيمية','مركز ماء القاسم','مركز ماء الطليعة'],
-    'الهاشمية':  ['مركز ماء الهاشمية','مركز ماء الحمزة الغربي','مركز ماء الشوملي'],
+    'المسيب':    ['ناحية سدة الهندية','ناحية سوراء','ناحية المسيب','ناحية الاسكندرية','ناحية جرف النصر'],
+    'المحاويل':  ['ناحية المحاويل','ناحية الامام','ناحية النيل'],
+    'الحلة':     ['ناحية عنانة وبرنون','ناحية المعيميرة','ناحية المدينة','ناحية ابي غرق'],
+    'الكفل':     ['ناحية الكفل'],
+    'كوثى':      ['ناحية كوثى'],
+    'القاسم':    ['ناحية الابراهيمية','ناحية القاسم','ناحية الطليعة'],
+    'الهاشمية':  ['ناحية الهاشمية','ناحية الحمزة الغربي','ناحية الشوملي'],
 };
 
 /* ─── ID Generation: DISTRICT-CENTER-NNN ─── */
@@ -630,14 +634,14 @@ const DISTRICT_CODES = {
     'الكفل':'KFL','كوثى':'KTH','القاسم':'QSM','الهاشمية':'HSH',
 };
 const CENTER_CODES = {
-    'مركز ماء سدة الهندية':'SHN','مركز ماء سوراء':'SWR','مركز ماء المسيب':'MSB',
-    'مركز ماء الاسكندرية':'ISK','مركز ماء جرف النصر':'JRF',
-    'مركز ماء المحاويل':'MHW','مركز ماء الامام':'IMM','مركز ماء النيل':'NIL',
-    'مركز ماء عنانة وبرنون':'ANB','مركز ماء المعيميرة':'MAM',
-    'مركز المدينة':'MDN','مركز ماء ابي غرق':'AGH',
-    'مركز ماء الكفل':'KFL','مركز ماء كوثى':'KTH',
-    'مركز ماء الابراهيمية':'IBR','مركز ماء القاسم':'QSM','مركز ماء الطليعة':'TLA',
-    'مركز ماء الهاشمية':'HSH','مركز ماء الحمزة الغربي':'HMZ','مركز ماء الشوملي':'SHM',
+    'ناحية سدة الهندية':'SHN','ناحية سوراء':'SWR','ناحية المسيب':'MSB',
+    'ناحية الاسكندرية':'ISK','ناحية جرف النصر':'JRF',
+    'ناحية المحاويل':'MHW','ناحية الامام':'IMM','ناحية النيل':'NIL',
+    'ناحية عنانة وبرنون':'ANB','ناحية المعيميرة':'MAM',
+    'ناحية المدينة':'MDN','ناحية ابي غرق':'AGH',
+    'ناحية الكفل':'KFL','ناحية كوثى':'KTH',
+    'ناحية الابراهيمية':'IBR','ناحية القاسم':'QSM','ناحية الطليعة':'TLA',
+    'ناحية الهاشمية':'HSH','ناحية الحمزة الغربي':'HMZ','ناحية الشوملي':'SHM',
 };
 function generateProjectId(district, center) {
     const d = DISTRICT_CODES[district] || district.replace(/ال/g,'').slice(0,3).toUpperCase();
@@ -650,7 +654,7 @@ function generateProjectId(district, center) {
 function cascadeCenter() {
     const district = document.getElementById('b_district').value;
     const sel = document.getElementById('b_center');
-    sel.innerHTML = '<option value="">— اختر المركز —</option>';
+    sel.innerHTML = '<option value="">— اختر الناحية —</option>';
     if (district && DISTRICTS[district]) {
         DISTRICTS[district].forEach(c => {
             const o = document.createElement('option');
@@ -727,7 +731,7 @@ function updateProgress() {
 const validators = {
     b_name:       v => v.length<2 ? 'أدخل اسم المجمع' : '',
     b_district:   v => !v ? 'يرجى اختيار القضاء' : '',
-    b_center:     v => !v ? 'يرجى اختيار المركز' : '',
+    b_center:     v => !v ? 'يرجى اختيار الناحية' : '',
     b_work_status:v => !v ? 'يرجى اختيار الحالة' : '',
     b_year:       v => v && (v<1950||v>2030) ? 'السنة بين 1950 و 2030' : '',
     b_capacity:   v => v && v<0 ? 'القيمة لا تكون سالبة' : '',
@@ -845,6 +849,7 @@ document.getElementById('mainForm').addEventListener('submit', function(e) {
     db.projects.push({
         id: pid, created_at: now,
         district: gv('b_district'), center: gv('b_center'), name: gv('b_name'),
+        operation_div: gv('b_operation_div'),
         capacity: gv('b_capacity'), year: gv('b_year'), work_status: gv('b_work_status'),
         river: gv('b_river'), river_status: gv('b_river_status'),
         lat: gv('b_lat'), lng: gv('b_lng'),
@@ -1071,6 +1076,14 @@ function renderPumpRows() {
                         <label>الرقم المتسلسل</label>
                         <input type="text" maxlength="60" placeholder="S/N" value="${escapeHtml(row.serial||'')}" oninput="updatePumpField(${i},'serial',this.value)">
                     </div>
+                    <div class="form-group">
+                        <label>تاريخ آخر صيانة</label>
+                        <input type="date" value="${row.maint_date||''}" onchange="updatePumpField(${i},'maint_date',this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>كلفة الصيانة (دينار)</label>
+                        <input type="number" min="0" step="1000" placeholder="0" value="${row.maint_cost||''}" oninput="updatePumpField(${i},'maint_cost',this.value)">
+                    </div>
                 </div>
             </div>
         </div>`).join('');
@@ -1078,7 +1091,7 @@ function renderPumpRows() {
     syncPumpsData();
 }
 function addPumpRow() {
-    pumpRows.push({func:'الدفع',condition:'جيدة',type:'أفقية',flow:'',pressure:'',power:'',year:'',origin:'',serial:''});
+    pumpRows.push({func:'الدفع',condition:'جيدة',type:'أفقية',flow:'',pressure:'',power:'',year:'',origin:'',serial:'',maint_date:'',maint_cost:''});
     renderPumpRows();
 }
 function removePumpRow(idx) { pumpRows.splice(idx,1); renderPumpRows(); }
@@ -1155,6 +1168,10 @@ function renderChemRows() {
                         <label>حجم القنينة (كغم)</label>
                         <input type="number" min="0" step="0.1" placeholder="0" value="${row.cylinder_size||''}" oninput="updateChemField(${i},'cylinder_size',this.value)">
                     </div>` : ''}
+                    <div class="form-group">
+                        <label>الكمية المتوفرة (كغم)</label>
+                        <input type="number" min="0" step="0.1" placeholder="0" value="${row.qty_available||''}" oninput="updateChemField(${i},'qty_available',this.value)">
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -1163,7 +1180,7 @@ function renderChemRows() {
     syncChemData();
 }
 function addChemRow() {
-    chemRows.push({type:'تصفية',status:'عامل',method:'الشب',cylinders:'',cylinder_size:''});
+    chemRows.push({type:'تصفية',status:'عامل',method:'الشب',cylinders:'',cylinder_size:'',qty_available:''});
     renderChemRows();
 }
 function removeChemRow(idx) { chemRows.splice(idx,1); renderChemRows(); }
